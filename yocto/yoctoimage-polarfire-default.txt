@@ -1,0 +1,153 @@
+joelphilip@joelphilip-LOQ:~/yocto_boot$ dumpimage -l fitImage
+FIT description: Kernel fitImage for OpenEmbedded/6.12.22+git/mpfs-icicle-kit
+Created:         Tue Jul 22 15:34:20 2025
+ Image 0 (kernel-1)
+  Description:  Linux kernel
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Kernel Image
+  Compression:  gzip compressed
+  Data Size:    6263492 Bytes = 6116.69 KiB = 5.97 MiB
+  Architecture: RISC-V
+  OS:           Linux
+  Load Address: 0x80200000
+  Entry Point:  0x80200000
+  Hash algo:    sha256
+  Hash value:   88bd836b0ecb07c0ec7cd14b06be44063aa9f903f39824c382189e424bc5084a
+ Image 1 (fdt-mpfs-icicle-kit.dtb)
+  Description:  Flattened Device Tree blob
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Flat Device Tree
+  Compression:  uncompressed
+  Data Size:    24218 Bytes = 23.65 KiB = 0.02 MiB
+  Architecture: RISC-V
+  Load Address: 0x8a000000
+  Hash algo:    sha256
+  Hash value:   722cf23f6b261d0ba48e5e5fec2bb0decb7ad7e6683cceae6374f63dd58a6ec1
+ Image 2 (fdt-mpfs-icicle-kit-prod.dtb)
+  Description:  Flattened Device Tree blob
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Flat Device Tree
+  Compression:  uncompressed
+  Data Size:    24328 Bytes = 23.76 KiB = 0.02 MiB
+  Architecture: RISC-V
+  Load Address: 0x8a000000
+  Hash algo:    sha256
+  Hash value:   680f9ab0889303afe616afe350cda577e61dc22d561b334a59d9ed0638ca71e3
+ Image 3 (fdt-mpfs_icicle_amp.dtbo)
+  Description:  Flattened Device Tree blob
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Flat Device Tree
+  Compression:  uncompressed
+  Data Size:    2408 Bytes = 2.35 KiB = 0.00 MiB
+  Architecture: RISC-V
+  Load Address: 0x8a080000
+  Hash algo:    sha256
+  Hash value:   543a11083cba72ba2607d96c99cda59fc322c7ffcf6d77553e6dc9d83b910472
+ Image 4 (fdt-mpfs_icicle_cpu_opp.dtbo)
+  Description:  Flattened Device Tree blob
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Flat Device Tree
+  Compression:  uncompressed
+  Data Size:    1520 Bytes = 1.48 KiB = 0.00 MiB
+  Architecture: RISC-V
+  Load Address: 0x8a080000
+  Hash algo:    sha256
+  Hash value:   0f98c4514f1142fc3ef47a02f23f8a0877f86d3c0d915c8d3555e02f8ae80baf
+ Image 5 (fdt-mpfs_icicle_flash5_click.dtbo)
+  Description:  Flattened Device Tree blob
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Flat Device Tree
+  Compression:  uncompressed
+  Data Size:    595 Bytes = 0.58 KiB = 0.00 MiB
+  Architecture: RISC-V
+  Load Address: 0x8a080000
+  Hash algo:    sha256
+  Hash value:   e59693a157d9abb5c894325658e88a3d7266602d581b82068099a167aa78d883
+ Image 6 (fdt-mpfs_icicle_pmod_sf3.dtbo)
+  Description:  Flattened Device Tree blob
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Flat Device Tree
+  Compression:  uncompressed
+  Data Size:    560 Bytes = 0.55 KiB = 0.00 MiB
+  Architecture: RISC-V
+  Load Address: 0x8a080000
+  Hash algo:    sha256
+  Hash value:   8ec114641884f1d9a4eeb165dc598bfd8e5c9ac777818a5731bbe4644ae9f72c
+ Image 7 (fdt-mpfs_icicle_rpi_sense_hat.dtbo)
+  Description:  Flattened Device Tree blob
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Flat Device Tree
+  Compression:  uncompressed
+  Data Size:    1271 Bytes = 1.24 KiB = 0.00 MiB
+  Architecture: RISC-V
+  Load Address: 0x8a080000
+  Hash algo:    sha256
+  Hash value:   f035773df6d4eb9a175644f36dcc7a7335cd222e7f4e783e1bbe0180bb1f1c4f
+ Image 8 (fdt-mpfs_icicle_stepper7_click.dtbo)
+  Description:  Flattened Device Tree blob
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Flat Device Tree
+  Compression:  uncompressed
+  Data Size:    659 Bytes = 0.64 KiB = 0.00 MiB
+  Architecture: RISC-V
+  Load Address: 0x8a080000
+  Hash algo:    sha256
+  Hash value:   d094e318216c6ef215b2a868355f140fb14bd406b7b6597bceb1f68337207239
+ Image 9 (bootscr-boot.scr)
+  Description:  U-boot script
+  Created:      Tue Jul 22 15:34:20 2025
+  Type:         Script
+  Compression:  uncompressed
+  Data Size:    532 Bytes = 0.52 KiB = 0.00 MiB
+  Hash algo:    sha256
+  Hash value:   cbffbc310828ec0312f3a0fa8cb12ab6603e71096c493a370c4c5dd01fe83bad
+ Default Configuration: 'conf-microchip,mpfs-icicle-kit.dtb'
+ Configuration 0 (conf-microchip,mpfs-icicle-kit.dtb)
+  Description:  1 Linux kernel, FDT blob, u-boot script
+  Kernel:       kernel-1
+  FDT:          fdt-mpfs-icicle-kit.dtb
+  Hash algo:    sha256
+  Hash value:   unavailable
+ Configuration 1 (conf-microchip,mpfs-icicle-kit-prod.dtb)
+  Description:  0 Linux kernel, FDT blob, u-boot script
+  Kernel:       kernel-1
+  FDT:          fdt-mpfs-icicle-kit-prod.dtb
+  Hash algo:    sha256
+  Hash value:   unavailable
+ Configuration 2 (conf-microchip,mpfs_icicle_amp.dtbo)
+  Description:  0 FDT blob, u-boot script
+  Kernel:       unavailable
+  FDT:          fdt-mpfs_icicle_amp.dtbo
+  Hash algo:    sha256
+  Hash value:   unavailable
+ Configuration 3 (conf-microchip,mpfs_icicle_cpu_opp.dtbo)
+  Description:  0 FDT blob, u-boot script
+  Kernel:       unavailable
+  FDT:          fdt-mpfs_icicle_cpu_opp.dtbo
+  Hash algo:    sha256
+  Hash value:   unavailable
+ Configuration 4 (conf-microchip,mpfs_icicle_flash5_click.dtbo)
+  Description:  0 FDT blob, u-boot script
+  Kernel:       unavailable
+  FDT:          fdt-mpfs_icicle_flash5_click.dtbo
+  Hash algo:    sha256
+  Hash value:   unavailable
+ Configuration 5 (conf-microchip,mpfs_icicle_pmod_sf3.dtbo)
+  Description:  0 FDT blob, u-boot script
+  Kernel:       unavailable
+  FDT:          fdt-mpfs_icicle_pmod_sf3.dtbo
+  Hash algo:    sha256
+  Hash value:   unavailable
+ Configuration 6 (conf-microchip,mpfs_icicle_rpi_sense_hat.dtbo)
+  Description:  0 FDT blob, u-boot script
+  Kernel:       unavailable
+  FDT:          fdt-mpfs_icicle_rpi_sense_hat.dtbo
+  Hash algo:    sha256
+  Hash value:   unavailable
+ Configuration 7 (conf-microchip,mpfs_icicle_stepper7_click.dtbo)
+  Description:  0 FDT blob, u-boot script
+  Kernel:       unavailable
+  FDT:          fdt-mpfs_icicle_stepper7_click.dtbo
+  Hash algo:    sha256
+  Hash value:   unavailable
+joelphilip@joelphilip-LOQ:~/yocto_boot$ 
