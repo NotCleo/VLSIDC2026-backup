@@ -1,0 +1,26 @@
+YOU CANNOT DO THIS, IT WILL BREAK THE IMAGE WHEN YOU TRY TO BOOT IT, IT WILL FAIL, MODIFICAIONS you make to the device tree inside the fitImage broke the overall image's cryptographic signature.
+
+download both the yocto and the ubuntu for icicle kit.
+`` use fdisk -l your_ubuntu_image.img to see the partitions in the image
+make a directory and mount it 
+
+install
+sudo apt update
+sudo apt install u-boot-tools
+
+dump the fitImage
+cd ~/yocto_boot
+dumpimage -l fitImage
+
+dump the dtb file
+dumpimage -T flat_dt -p 2 -o ~/mpfs-icicle-kit-prod.dtb fitImage
+
+decompile into dts 
+dtc -I dtb -O dts -o mpfs-icicle-kit-prod.dts mpfs-icicle-kit-prod.dtb
+
+
+use less to view
+less mpfs-icicle-kit-prod.dts
+
+
+OR 
