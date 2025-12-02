@@ -1,0 +1,11 @@
+# --- Training and ONNX Export ---
+torch
+torchvision
+
+# --- ONNX Inference and Image Handling (Pillow/ONNX Runtime) ---
+numpy
+onnxruntime
+Pillow
+
+# --- Calibration Data Generation (OpenCV) ---
+opencv-python
