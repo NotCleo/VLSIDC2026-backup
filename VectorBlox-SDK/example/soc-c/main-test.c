@@ -7,14 +7,18 @@
 #include "ultrasonic.h"
 #include "camera.h"
 #include "classifier.h"
+#include "servo.h" // Wraps the Software PWM logic
+#include "pwm.h"   // Added Hardware PWM logic
 
 void print_menu() {
-    printf("\n=== FACTORY SYSTEM DIAGNOSTICS (NO MOTORS) ===\n");
+    printf("\n=== FACTORY SYSTEM DIAGNOSTICS ===\n");
     printf("1. Test UART (Flash Button b1 Green -> White)\n");
     printf("2. Test Ultrasonic (Read distance for 5s)\n");
     printf("3. Test Camera (Take 'test.jpg')\n");
     printf("4. Test Classifier (Run AI on 'test.jpg')\n");
-    printf("5. Test Full Sequence (1 Cycle - Simulated Motors)\n");
+    printf("5. Test Full Sequence (1 Cycle - REAL Servo)\n");
+    printf("6. Test Servo (Wiggle Left/Right)\n");
+    printf("7. Test PWM Motor (80kHz @ 60%% Duty)\n"); // New Option
     printf("0. Exit\n");
     printf("Select Component: ");
 }
@@ -51,6 +55,9 @@ int main() {
 
     if (sensor_init() != 0) printf("Sensor Init Failed!\n");
     else printf("Sensor Initialized.\n");
+
+    if (servo_init() != 0) printf("Servo Init Failed! (Check root/export)\n");
+    else printf("Servo Initialized.\n");
     
     int choice;
     while(1) {
@@ -64,6 +71,9 @@ int main() {
             case 0:
                 printf("Exiting...\n");
                 uart_close();
+                servo_close(); // Clean up servo
+                // Clean up PWM Channel 0 if used
+                // pwm_disable(0); 
                 return 0;
 
             case 1: // UART
@@ -110,7 +120,7 @@ int main() {
                 
                 // --- DEBUG: Rigorous File Check ---
                 printf("Checking 'test.jpg' integrity...\n");
-                system("sync"); // Ensure previous writes are flushed
+                system("sync"); 
                 
                 FILE *f = fopen("test.jpg", "rb");
                 if (f) {
@@ -120,12 +130,12 @@ int main() {
                     printf("DEBUG: File size is %ld bytes.\n", fsize);
                     
                     if (fsize < 100) { 
-                        printf("ERROR: File is too small to be a valid image.\n");
+                        printf("ERROR: File is too small.\n");
                         break; 
                     }
                     
                     if (!check_jpeg_header("test.jpg")) {
-                        printf("ERROR: File is NOT a valid JPEG (Bad Header).\n");
+                        printf("ERROR: Bad JPEG Header.\n");
                         break;
                     }
                 } else {
@@ -137,7 +147,7 @@ int main() {
                 printf("Running Inference on 'test.jpg'...\n");
                 int id = classifier_predict("test.jpg");
                 if (id == -1) {
-                    printf("ERROR: Classifier returned -1 (Image Format Error). Try taking a new picture with Option 3.\n");
+                    printf("ERROR: Classifier returned -1 (Image Format Error).\n");
                 } else {
                     printf(">>> CLASSIFICATION RESULT: Class %d <<<\n", id);
                 }
@@ -188,14 +198,52 @@ int main() {
                 printf(">>> RESULT: Class %d <<<\n", cls);
                 
                 if (cls == 0) {
-                    printf("[Simulated] Servo moving LEFT (Apple)\n");
+                    // Actual Servo Action for Apple
+                    servo_sort_left();
                     uart_send_hmi("t0.txt=\"APPLE\"");
                 } else {
-                    printf("[Simulated] Servo moving RIGHT (Banana)\n");
+                    // Actual Servo Action for Banana
+                    servo_sort_right();
                     uart_send_hmi("t0.txt=\"BANANA\"");
                 }
                 
-                printf("Cycle Complete. [Simulated] Conveyor Restarting...\n");
+                printf("Cycle Complete. Resetting Servo...\n");
+                sleep(1);
+                // Updated to match servo.h signature: angle + duration
+                servo_set_angle(90, 1000); 
+                break;
+
+            case 6: // SERVO TEST
+                printf("Testing Servo Movement...\n");
+                printf("Moving Left (0 deg)...\n");
+                servo_sort_left();
+                sleep(1);
+                printf("Moving Right (60 deg)...\n"); // Updated text to match your code
+                servo_sort_right();
+                printf("Centering (90 deg)...\n");
+                // Updated to match servo.h signature: angle + duration
+                servo_set_angle(90, 1000);
+                printf("Done.\n");
+                break;
+
+            case 7: // PWM MOTOR TEST (80kHz, 60% Duty)
+                printf("Testing Hardware PWM (Motor)...\n");
+                printf("Configuring Channel 0 for 80kHz...\n");
+                
+                // Frequency: 80kHz -> Period: 1/80000 = 12500 ns
+                // Duty: 60% of 12500 = 7500 ns
+                int period = 12500;
+                int duty = 7500;
+                
+                if (pwm_setup(0, period, duty) == 0) {
+                    printf("PWM Enabled: Period=%dns, Duty=%dns\n", period, duty);
+                    printf("Running for 5 seconds...\n");
+                    sleep(5);
+                    printf("Disabling PWM...\n");
+                    pwm_disable(0);
+                } else {
+                    printf("PWM Setup Failed!\n");
+                }
                 break;
 
             default:

@@ -2,7 +2,7 @@
 # Updated to match your system's compiler: riscv64-linux-gnu-gcc
 CC = riscv64-linux-gnu-gcc
 CXX = riscv64-linux-gnu-g++
-TARGET = sorting_test
+TARGET = component-test
 
 # *** JPEG LIBRARY PATH (Updated to your specific location) ***
 JPEG_PATH = /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/jpeg-9e/riscv-install
@@ -26,8 +26,7 @@ C_SRCS += ../postprocess/postprocess.c ../postprocess/postprocess_scrfd.c ../pos
 C_SRCS += ../../drivers/vectorblox/vbx_cnn_api.c ../../drivers/vectorblox/vbx_cnn_model.c
 
 # 2. Application Files
-C_SRCS += main-test.c uart.c ultrasonic.c camera.c
-
+C_SRCS += main-test.c uart.c ultrasonic.c camera.c servo.c pwm.c
 # 3. C++ Classifier
 CXX_SRCS = classifier.cpp
 

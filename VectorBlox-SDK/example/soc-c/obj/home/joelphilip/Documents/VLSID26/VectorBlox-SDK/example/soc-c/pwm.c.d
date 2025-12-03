@@ -1,6 +1,7 @@
-obj//home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/main-test.c.o: \
- /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/main-test.c \
+obj//home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/pwm.c.o: \
+ /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/pwm.c \
  /usr/riscv64-linux-gnu/include/stdc-predef.h \
+ /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/pwm.h \
  /usr/riscv64-linux-gnu/include/stdio.h \
  /usr/riscv64-linux-gnu/include/bits/libc-header-start.h \
  /usr/riscv64-linux-gnu/include/features.h \
@@ -58,6 +59,18 @@ obj//home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/main-test.c.
  /usr/riscv64-linux-gnu/include/bits/stdlib-bsearch.h \
  /usr/riscv64-linux-gnu/include/bits/stdlib-float.h \
  /usr/riscv64-linux-gnu/include/bits/stdlib.h \
+ /usr/riscv64-linux-gnu/include/fcntl.h \
+ /usr/riscv64-linux-gnu/include/bits/fcntl.h \
+ /usr/riscv64-linux-gnu/include/bits/fcntl-linux.h \
+ /usr/riscv64-linux-gnu/include/bits/stat.h \
+ /usr/riscv64-linux-gnu/include/bits/struct_stat.h \
+ /usr/riscv64-linux-gnu/include/bits/fcntl2.h \
+ /usr/riscv64-linux-gnu/include/string.h \
+ /usr/riscv64-linux-gnu/include/bits/types/locale_t.h \
+ /usr/riscv64-linux-gnu/include/bits/types/__locale_t.h \
+ /usr/riscv64-linux-gnu/include/strings.h \
+ /usr/riscv64-linux-gnu/include/bits/strings_fortified.h \
+ /usr/riscv64-linux-gnu/include/bits/string_fortified.h \
  /usr/riscv64-linux-gnu/include/unistd.h \
  /usr/riscv64-linux-gnu/include/bits/posix_opt.h \
  /usr/riscv64-linux-gnu/include/bits/environments.h \
@@ -71,20 +84,4 @@ obj//home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/main-test.c.
  /usr/riscv64-linux-gnu/include/linux/errno.h \
  /usr/riscv64-linux-gnu/include/asm/errno.h \
  /usr/riscv64-linux-gnu/include/asm-generic/errno.h \
- /usr/riscv64-linux-gnu/include/asm-generic/errno-base.h \
- /usr/riscv64-linux-gnu/include/string.h \
- /usr/riscv64-linux-gnu/include/bits/types/locale_t.h \
- /usr/riscv64-linux-gnu/include/bits/types/__locale_t.h \
- /usr/riscv64-linux-gnu/include/strings.h \
- /usr/riscv64-linux-gnu/include/bits/strings_fortified.h \
- /usr/riscv64-linux-gnu/include/bits/string_fortified.h \
- /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/uart.h \
- /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/ultrasonic.h \
- /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/camera.h \
- /usr/lib/gcc-cross/riscv64-linux-gnu/11/include/stdint.h \
- /usr/riscv64-linux-gnu/include/stdint.h \
- /usr/riscv64-linux-gnu/include/bits/wchar.h \
- /usr/riscv64-linux-gnu/include/bits/stdint-uintn.h \
- /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/classifier.h \
- /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/servo.h \
- /home/joelphilip/Documents/VLSID26/VectorBlox-SDK/example/soc-c/pwm.h
+ /usr/riscv64-linux-gnu/include/asm-generic/errno-base.h
