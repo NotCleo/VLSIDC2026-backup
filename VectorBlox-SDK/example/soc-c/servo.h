@@ -1,21 +1,28 @@
 #ifndef SERVO_H
 #define SERVO_H
 
-// Initialize the Servo GPIO
-// Returns 0 on success, -1 on failure
+/**
+ * Initializes the GPIO pin for the servo.
+ * - Exports the GPIO pin.
+ * - Sets direction to 'out'.
+ * - Opens the file descriptor for writing values.
+ * * Returns: File descriptor (int) to be passed to other functions, or -1 on error.
+ */
 int servo_init(void);
 
-// Move the servo to a specific angle (0 to 180)
-// duration_ms: How long to send the pulse (e.g., 1000 for 1 second)
-void servo_set_angle(int angle, int duration_ms);
+/**
+ * Executes the specific movement pattern:
+ * 1. Ensures Servo is at 0 degrees (Initial position).
+ * 2. Moves to 'target_angle' and holds it for 3 seconds.
+ * 3. Returns to 0 degrees.
+ * * gpio_fd: The file descriptor returned by servo_init().
+ * target_angle: The angle to shift to (e.g., 60).
+ */
+void servo_perform_cycle(int gpio_fd, int target_angle);
 
-// Helper for "Apple" (e.g., Angle 0)
-void servo_sort_left(void);
-
-// Helper for "Banana" (e.g., Angle 60 or 180)
-void servo_sort_right(void);
-
-// Close resources
-void servo_close(void);
+/**
+ * Cleans up and closes the file descriptor.
+ */
+void servo_close(int gpio_fd);
 
 #endif
