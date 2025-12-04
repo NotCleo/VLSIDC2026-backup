@@ -1,18 +1,30 @@
 #ifndef UART_H
 #define UART_H
 
-// Setup
+// Initialize both HMI (ttyS0) and Bluetooth (ttyS3)
 int uart_init(void);
 
-// 1. Send raw text (for debugging or standard serial)
-void uart_send_raw(const char *message);
+// -------------------------------------------------
+// HMI FUNCTIONS (ttyS0)
+// -------------------------------------------------
 
-// 2. Send HMI Command (Automatically adds the 0xFF 0xFF 0xFF)
-void uart_send_hmi(const char *cmd);
+// Send Nextion Command (Automatically adds the 0xFF 0xFF 0xFF)
+// Example: uart_hmi_send("t0.txt=\"Hello\"");
+void uart_hmi_send(const char *cmd);
 
-// 3. Check for 'A' or 'B'
-char uart_check_input(void);
+// Check for input from HMI (Non-blocking)
+// Returns the character read, or 0 if buffer is empty
+char uart_hmi_check_input(void);
 
+// -------------------------------------------------
+// BLUETOOTH FUNCTIONS (ttyS3)
+// -------------------------------------------------
+
+// Send raw text to Bluetooth module
+// Example: uart_bt_send("Defect Detected\n");
+void uart_bt_send(const char *message);
+
+// Close both ports
 void uart_close(void);
 
 #endif
