@@ -54,10 +54,10 @@ void force_kill_camera(void) {
     // Uses 'fuser' command to find and kill process accessing /dev/video0
     // -k: kill
     // -9: SIGKILL (Force kill)
-    // > /dev/null: Silence output
+    // > /dev/null: Silence output (Does not affect functionality)
     system("fuser -k -9 /dev/video0 > /dev/null 2>&1");
-    // Wait a tiny fraction to ensure OS cleans up
-    usleep(10000); 
+    // Increased wait to 200ms to ensure Kernel releases resources completely
+    usleep(200000); 
 }
 
 // ==========================================
@@ -270,11 +270,15 @@ void run_automatic_mode(int servo_fd) {
         // Update HMI: Processing
         hmi_set_var("state", 2);
         
+        // [UPDATED] Ensure previous session is dead BEFORE we try to init
+        printf("Ensuring camera device is free...\n");
+        force_kill_camera();
+
         // Initialize Camera (Done PER CYCLE)
         printf("Initializing camera...\n");
         if (camera_init() != 0) {
             fprintf(stderr, "ERROR: Camera initialization failed\n");
-            // Continue to loop? Or break? Breaking to be safe.
+            // Break loop if we can't initialize
             break; 
         }
 
@@ -282,9 +286,9 @@ void run_automatic_mode(int servo_fd) {
         printf("Capturing image...\n");
         if (camera_capture_to_file(IMAGE_PATH) != 0) {
             fprintf(stderr, "ERROR: Image capture failed\n");
-            // If capture fails, we try to cleanup and loop again
+            // If capture fails, cleanup and retry next loop
             camera_cleanup();
-            force_kill_camera(); // Ensure process is killed even on failure
+            force_kill_camera();
             continue;
         }
         printf("✓ Image saved to %s\n", IMAGE_PATH);
@@ -372,8 +376,8 @@ void run_automatic_mode(int servo_fd) {
         printf("Cleaning up camera resource...\n");
         camera_cleanup();
         
-        // FORCE KILL to ensure kernel releases /dev/video0
-        force_kill_camera();
+        // [UPDATED] Removed redundant force_kill_camera here.
+        // It is now done at the start of the next camera phase.
 
         // Brief delay before next cycle
         printf("\nReady for next item scan in 1 second...\n");
@@ -392,7 +396,7 @@ void run_automatic_mode(int servo_fd) {
 int main(int argc, char **argv) {
     printf("\n");
     printf("╔════════════════════════════════════════╗\n");
-    printf("║   Automated Inspection System v2.2     ║\n");
+    printf("║   Automated Inspection System v2.3     ║\n");
     printf("║   PolarFire SoC Icicle Kit             ║\n");
     printf("╚════════════════════════════════════════╝\n");
     printf("\n");
