@@ -18,8 +18,8 @@
 #define PWM_PERIOD_NS 20000000    // 20ms = 50Hz
 #define PWM_DUTY_NS 1500000       // 1.5ms pulse width (adjust for your motor)
 #define DISTANCE_THRESHOLD 8.0    // cm
-#define MODEL_PATH "my_model.vnnx" // Path to your compiled model
-#define IMAGE_PATH "capture.jpg"
+#define MODEL_PATH "./model.vnnx" // Path to your compiled model
+#define IMAGE_PATH "./capture.jpg"
 
 // GPIO Configuration for Pin 22 (Line 13)
 #define GPIO_BASE 512
@@ -225,7 +225,11 @@ void run_inspection_cycle(int servo_fd) {
     
     printf("✓ Classification result: Class %d\n", class_id);
     
-    // 6. Handle defect (Class 1) - Restart PWM and activate servo simultaneously
+    // 6. Pause before restarting (allow mechanical settling)
+    printf("\nPausing for 2 seconds before restarting conveyor...\n");
+    sleep(2);
+    
+    // 7. Handle defect (Class 1) - Restart PWM and activate servo simultaneously
     if (class_id == 1) {
         printf("\n*** DEFECTIVE ITEM DETECTED ***\n");
         
@@ -261,7 +265,7 @@ void run_inspection_cycle(int servo_fd) {
         printf("✓ PWM restarted\n");
     }
     
-    // 7. Brief delay before next cycle
+    // 8. Brief delay before next cycle
     printf("\nReady for next item in 1 second...\n");
     sleep(1);
     
@@ -302,8 +306,10 @@ int main(int argc, char **argv) {
     // Main control loop
     printf("=== System Active ===\n");
     printf("Waiting for UART command to start...\n");
-    printf("Send any character via UART to begin inspection cycle.\n");
-    printf("Press Ctrl+C to exit.\n\n");
+    printf("Commands:\n");
+    printf("  - Send any character (except 'B') to start inspection cycle\n");
+    printf("  - Send 'B' to shutdown system\n");
+    printf("  - Press Ctrl+C for emergency stop\n\n");
     
     int system_armed = 0;
     
@@ -312,6 +318,15 @@ int main(int argc, char **argv) {
         char received = uart_check_input();
         
         if (received != 0) {
+            // Check for shutdown command
+            if (received == 'B' || received == 'b') {
+                printf("\n>>> Received shutdown command: '%c' <<<\n", received);
+                printf("Initiating graceful shutdown...\n");
+                running = 0;  // This will exit the loop
+                break;
+            }
+            
+            // Any other character starts inspection
             if (!system_armed) {
                 printf("\n>>> Received command: '%c' <<<\n", received);
                 printf("System ARMED - Starting inspection cycle\n");
@@ -324,6 +339,8 @@ int main(int argc, char **argv) {
             // After cycle completes, wait for next command
             system_armed = 0;
             printf("\nWaiting for next UART command...\n");
+            printf("  - Send any character to continue\n");
+            printf("  - Send 'B' to shutdown\n");
         }
         
         usleep(50000); // 50ms polling for UART
