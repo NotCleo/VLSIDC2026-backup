@@ -104,24 +104,44 @@ void servo_perform_cycle(int gpio_fd, int target_angle) {
         return;
     }
 
-    // 1. Start at 0 (Initial Position)
-    // We hold this briefly (500ms) to ensure it physically moves to start if not there
-    printf("Servo: Moving to 0 degrees (Start)\n");
-    hold_angle(gpio_fd, 0, 500); 
-
-    // 2. Shift to set angle (e.g. 60) and hold for 3 seconds
-    printf("Servo: Moving to %d degrees (Action)\n", target_angle);
-    hold_angle(gpio_fd, target_angle, 3000); 
-
-    // 3. Revert back to 0
-    // Holding for 1 second to ensure it settles back
-    printf("Servo: Reverting to 0 degrees (End)\n");
-    hold_angle(gpio_fd, 0, 1000); 
+    printf("Servo: Starting single rejection cycle...\n");
+    
+    // MOVEMENT SEQUENCE - EXACTLY ONE COMPLETE CYCLE:
+    // 1. Ensure at 0 degrees (starting position)
+    // 2. Move to target_angle and hold
+    // 3. Return to 0 degrees (neutral/ready position)
+    // 4. STOP (servo remains at 0 degrees until next call)
+    
+    // Step 1: Move to 0 degrees (if not already there)
+    printf("Servo: Moving to 0° (start position)\n");
+    hold_angle(gpio_fd, 0, 500);  // 500ms to ensure it reaches position
+    
+    // Step 2: Move to target angle (rejection position) and hold
+    printf("Servo: Moving to %d° (rejection position)\n", target_angle);
+    hold_angle(gpio_fd, target_angle, 3000);  // Hold for 3 seconds to push item
+    
+    // Step 3: Return to 0 degrees (neutral position)
+    printf("Servo: Returning to 0° (neutral position)\n");
+    hold_angle(gpio_fd, 0, 1000);  // 1 second to return and settle
+    
+    // Step 4: Set GPIO LOW to stop sending PWM signals
+    // This ensures the servo stops holding position and won't drain power
+    write(gpio_fd, "0", 1);
+    
+    printf("Servo: Single cycle complete - servo stopped at 0°\n");
+    
+    // IMPORTANT: After this function returns, the servo will be:
+    // - Physically at 0 degrees
+    // - Not receiving PWM signals (GPIO is LOW)
+    // - Ready for the next cycle when this function is called again
+    // - Not consuming significant power in idle state
 }
 
 void servo_close(int gpio_fd) {
     if (gpio_fd != -1) {
+        // Ensure servo is stopped (GPIO LOW)
+        write(gpio_fd, "0", 1);
         close(gpio_fd);
-        printf("Servo: Closed.\n");
+        printf("Servo: Closed and stopped.\n");
     }
 }
