@@ -19,8 +19,8 @@
 #define PWM_PERIOD_NS 20000000    // 20ms = 50Hz
 #define PWM_DUTY_NS 1500000       // 1.5ms pulse width
 #define DISTANCE_THRESHOLD 8.0    // cm
-#define MODEL_PATH "my_model.vnnx" // Path to your compiled model
-#define IMAGE_PATH "capture.jpg"
+#define MODEL_PATH "./model.vnnx" // Path to your compiled model
+#define IMAGE_PATH "./capture.jpg"
 
 // GPIO Configuration for Pin 22 (Line 13)
 #define GPIO_BASE 512
@@ -43,7 +43,6 @@ static int defect_gpio_fd = -1;
 void hmi_set_var(const char *var_name, int value) {
     char cmd_buffer[32];
     snprintf(cmd_buffer, sizeof(cmd_buffer), "%s.val=%d", var_name, value);
-    // [UPDATED] Using the new HMI specific function from uart.h
     uart_hmi_send(cmd_buffer);
 }
 
@@ -132,12 +131,8 @@ int initialize_system(void) {
     }
     printf("✓ Ultrasonic sensor initialized\n");
     
-    // 3. Initialize Camera
-    if (camera_init() != 0) {
-        fprintf(stderr, "ERROR: Camera initialization failed\n");
-        return -1;
-    }
-    printf("✓ Camera initialized\n");
+    // 3. Initialize Camera (REMOVED - Will Init per cycle)
+    // if (camera_init() != 0) { ... }
     
     // 4. Initialize Classifier
     if (classifier_init(MODEL_PATH) != 0) {
@@ -170,7 +165,7 @@ void cleanup_system(void) {
     
     // Cleanup sensors
     sensor_cleanup();
-    camera_cleanup();
+    // camera_cleanup(); // Removed here, handled in cycle loop
     classifier_cleanup();
     
     // Close defect GPIO
@@ -211,10 +206,15 @@ void run_inspection_cycle(int servo_fd) {
         
         if (distance > 0 && distance < DISTANCE_THRESHOLD) {
             printf("Object detected at %.2f cm!\n", distance);
-            object_detected = 1;
             
             // State 1: Object Detected (Yellow)
             hmi_set_var("state", 1);
+            
+            // [UPDATED] Stop motor IMMEDIATELY
+            printf("Stopping motor immediately...\n");
+            pwm_disable(PWM_CHANNEL);
+            
+            object_detected = 1;
             
         } else if (distance > 0) {
             printf("Distance: %.2f cm\r", distance);
@@ -226,27 +226,31 @@ void run_inspection_cycle(int servo_fd) {
     
     if (!running) return;
     
-    // 3. Stop PWM
-    printf("\nStopping PWM...\n");
-    pwm_disable(PWM_CHANNEL);
-    usleep(500000); // Wait 500ms for mechanical settling
+    // 3. Mechanical Settling
+    // Motor is already stopped above, but we wait 500ms to ensure 
+    // vibrations cease before image capture.
+    usleep(500000); 
 
     // State 2: Processing (Blue)
     hmi_set_var("state", 2);
     
-    // 4. Capture image
+    // 4. Initialize Camera & Capture image (Late Init)
+    printf("Initializing camera...\n");
+    if (camera_init() != 0) {
+        fprintf(stderr, "ERROR: Camera initialization failed\n");
+        return; 
+    }
+
     printf("Capturing image...\n");
     if (camera_capture_to_file(IMAGE_PATH) != 0) {
         fprintf(stderr, "ERROR: Image capture failed\n");
+        camera_cleanup(); // Clean up if failed
         return;
     }
     printf("✓ Image saved to %s\n", IMAGE_PATH);
     
-    // -----------------------------------------------------
-    // [NEW REQ 1] Generate 5-digit Random ID & Send via BT
-    // -----------------------------------------------------
-    int unique_id = (rand() % 90000) + 10000; // Generates 10000 to 99999
-    
+    // [REQ 1] Generate 5-digit Random ID & Send via BT
+    int unique_id = (rand() % 90000) + 10000;
     snprintf(bt_buffer, sizeof(bt_buffer), "ID:%d\n", unique_id);
     uart_bt_send(bt_buffer);
     printf(">> Bluetooth Sent: %s", bt_buffer);
@@ -257,14 +261,13 @@ void run_inspection_cycle(int servo_fd) {
     
     if (class_id < 0) {
         fprintf(stderr, "ERROR: Classification failed\n");
+        camera_cleanup();
         return;
     }
     
     printf("✓ Classification result: Class %d\n", class_id);
     
-    // -----------------------------------------------------
-    // [NEW REQ 2] Transmit inference result via BT
-    // -----------------------------------------------------
+    // [REQ 2] Transmit inference result via BT
     snprintf(bt_buffer, sizeof(bt_buffer), "RESULT:CLASS_%d\n", class_id);
     uart_bt_send(bt_buffer);
     printf(">> Bluetooth Sent: %s", bt_buffer);
@@ -272,10 +275,10 @@ void run_inspection_cycle(int servo_fd) {
     // Update HMI Product ID
     hmi_set_var("prdID", class_id);
 
-    // 6. Pause before restarting (allow mechanical settling)
-    printf("\nPausing for 2 seconds before restarting conveyor...\n");
-    sleep(2);
-    
+    // [UPDATED] Delay 1 second before restarting motors
+    printf("Waiting 1 second before restarting motors...\n");
+    sleep(1);
+
     // 7. Handle defect (Class 1)
     if (class_id == 1) {
         printf("\n*** DEFECTIVE ITEM DETECTED ***\n");
@@ -293,7 +296,7 @@ void run_inspection_cycle(int servo_fd) {
         printf("Restarting PWM and activating servo for rejection...\n");
         if (pwm_setup(PWM_CHANNEL, PWM_PERIOD_NS, PWM_DUTY_NS) != 0) {
             fprintf(stderr, "ERROR: Failed to restart PWM\n");
-            return;
+            // Do not return immediately, ensure cleanup
         }
         
         printf("Activating servo for rejection...\n");
@@ -310,11 +313,13 @@ void run_inspection_cycle(int servo_fd) {
         printf("\nRestarting PWM (conveyor)...\n");
         if (pwm_setup(PWM_CHANNEL, PWM_PERIOD_NS, PWM_DUTY_NS) != 0) {
             fprintf(stderr, "ERROR: Failed to restart PWM\n");
-            return;
         }
         printf("✓ PWM restarted\n");
     }
     
+    // Cleanup Camera for next cycle
+    camera_cleanup();
+
     // 8. Brief delay before next cycle
     printf("\nReady for next item in 1 second...\n");
     sleep(1);
@@ -331,7 +336,7 @@ void run_inspection_cycle(int servo_fd) {
 int main(int argc, char **argv) {
     printf("\n");
     printf("╔════════════════════════════════════════╗\n");
-    printf("║   Automated Inspection System v1.1     ║\n");
+    printf("║   Automated Inspection System v1.3     ║\n");
     printf("║   PolarFire SoC Icicle Kit             ║\n");
     printf("╚════════════════════════════════════════╝\n");
     printf("\n");
@@ -370,7 +375,7 @@ int main(int argc, char **argv) {
     int system_armed = 0;
     
     while (running) {
-        // [UPDATED] Check for HMI input specifically
+        // Check for HMI input specifically
         char received = uart_hmi_check_input();
         
         if (received != 0) {
