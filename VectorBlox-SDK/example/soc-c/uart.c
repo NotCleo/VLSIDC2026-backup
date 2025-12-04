@@ -8,18 +8,19 @@
 #include <termios.h>
 
 // --- Configuration ---
-// On Raspberry Pi 3/4/Zero W, use "/dev/ttyS0" (mini-UART) or "/dev/ttyAMA0"
-// Ensure you have enabled serial in raspi-config and disabled the login shell over serial.
-#define SERIAL_PORT "/dev/ttyS0"
+#define HMI_PORT "/dev/ttyS0"
+#define BT_PORT  "/dev/ttyS3"
 #define BAUD_RATE B9600
 
-// Internal State
-static int serial_fd = -1;
+// Internal State - Two file descriptors now
+static int hmi_fd = -1;
+static int bt_fd = -1;
 
 // Define the Nextion/HMI Terminator (3 bytes of 0xFF)
 static const unsigned char HMI_TERMINATOR[3] = {0xFF, 0xFF, 0xFF};
 
 // --- Internal Helper: Configure the Port ---
+// This helper is generic and can configure any file descriptor
 static int configure_serial_port(int fd) {
     struct termios tty;
 
@@ -37,22 +38,21 @@ static int configure_serial_port(int fd) {
     tty.c_cflag |= CREAD | CLOCAL; // Enable Read, Ignore Modem Status lines
 
     // 2. Local Modes (c_lflag) - RAW MODE
-    tty.c_lflag &= ~ICANON;        // Disable Canonical mode (read byte-by-byte, not line-by-line)
-    tty.c_lflag &= ~ECHO;          // Disable Echo (don't repeat back what we hear)
+    tty.c_lflag &= ~ICANON;        // Disable Canonical mode
+    tty.c_lflag &= ~ECHO;          // Disable Echo
     tty.c_lflag &= ~ECHOE;         // Disable Erasure
-    tty.c_lflag &= ~ISIG;          // Disable Signals (no Ctrl+C handling here)
+    tty.c_lflag &= ~ISIG;          // Disable Signals
 
     // 3. Input Modes (c_iflag)
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Disable software flow control (XON/XOFF)
-    tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL); // Disable special handling
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Disable software flow control
+    tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
 
     // 4. Output Modes (c_oflag)
-    tty.c_oflag &= ~OPOST;         // Raw output (no processing/formatting)
+    tty.c_oflag &= ~OPOST;         // Raw output
     tty.c_oflag &= ~ONLCR;         // Don't map Newline to CR-NL
 
-    // 5. Read Blocking Behavior (CRITICAL FOR YOUR LOOP)
-    // VMIN = 0, VTIME = 0: Pure Non-blocking.
-    // read() returns immediately with 0 if no data is waiting.
+    // 5. Read Blocking Behavior
+    // Pure Non-blocking.
     tty.c_cc[VMIN] = 0;
     tty.c_cc[VTIME] = 0;
 
@@ -72,66 +72,78 @@ static int configure_serial_port(int fd) {
 // --- Public API ---
 
 int uart_init(void) {
-    // Open Serial Port
-    // O_RDWR: Read/Write
-    // O_NOCTTY: Do not make this the controlling terminal
-    // O_SYNC: Write directly to hardware (don't buffer in OS)
-    serial_fd = open(SERIAL_PORT, O_RDWR | O_NOCTTY | O_SYNC);
-    
-    if (serial_fd < 0) {
-        perror("UART: Failed to open device");
+    // 1. Initialize HMI (ttyS0)
+    hmi_fd = open(HMI_PORT, O_RDWR | O_NOCTTY | O_SYNC);
+    if (hmi_fd < 0) {
+        fprintf(stderr, "UART: Failed to open HMI port (%s)\n", HMI_PORT);
         return -1;
     }
-
-    if (configure_serial_port(serial_fd) != 0) {
-        close(serial_fd);
-        serial_fd = -1;
+    if (configure_serial_port(hmi_fd) != 0) {
+        close(hmi_fd);
+        hmi_fd = -1;
         return -1;
     }
+    printf("UART: HMI initialized on %s\n", HMI_PORT);
 
-    // Flush any garbage data sitting in the buffer
-    tcflush(serial_fd, TCIOFLUSH);
-    
-    printf("UART initialized on %s @ 9600 baud\n", SERIAL_PORT);
+    // 2. Initialize Bluetooth (ttyS3)
+    bt_fd = open(BT_PORT, O_RDWR | O_NOCTTY | O_SYNC);
+    if (bt_fd < 0) {
+        fprintf(stderr, "UART: Failed to open Bluetooth port (%s)\n", BT_PORT);
+        // We chose to continue even if BT fails, or return -1? 
+        // Returning -1 ensures strict hardware checking.
+        close(hmi_fd); 
+        hmi_fd = -1;
+        return -1;
+    }
+    if (configure_serial_port(bt_fd) != 0) {
+        close(bt_fd);
+        close(hmi_fd);
+        bt_fd = -1;
+        hmi_fd = -1;
+        return -1;
+    }
+    printf("UART: Bluetooth initialized on %s\n", BT_PORT);
+
     return 0;
 }
 
-void uart_send_raw(const char *message) {
-    if (serial_fd != -1) {
-        write(serial_fd, message, strlen(message));
+// Send specifically to HMI with terminator
+void uart_hmi_send(const char *cmd) {
+    if (hmi_fd != -1) {
+        write(hmi_fd, cmd, strlen(cmd));
+        write(hmi_fd, HMI_TERMINATOR, 3);
     }
 }
 
-void uart_send_hmi(const char *cmd) {
-    if (serial_fd != -1) {
-        // 1. Send the command string (e.g., "t0.bco=63488")
-        write(serial_fd, cmd, strlen(cmd));
-        
-        // 2. Send the 3 termination bytes immediately after
-        write(serial_fd, HMI_TERMINATOR, 3);
-    }
-}
-
-char uart_check_input(void) {
-    if (serial_fd == -1) return 0;
+// Check input specifically from HMI
+char uart_hmi_check_input(void) {
+    if (hmi_fd == -1) return 0;
 
     unsigned char c;
-    // Attempt to read 1 byte
-    // Because VMIN=0, this will NOT block. 
-    // It returns 1 if data exists, 0 if empty, -1 on error.
-    int n = read(serial_fd, &c, 1);
+    int n = read(hmi_fd, &c, 1);
     
     if (n > 0) {
-        return (char)c; // Return the character found
+        return (char)c;
     }
-    
-    return 0; // Return 0 if buffer is empty
+    return 0;
+}
+
+// Send raw text to Bluetooth
+void uart_bt_send(const char *message) {
+    if (bt_fd != -1) {
+        write(bt_fd, message, strlen(message));
+    }
 }
 
 void uart_close(void) {
-    if (serial_fd != -1) {
-        close(serial_fd);
-        serial_fd = -1;
-        printf("UART closed.\n");
+    if (hmi_fd != -1) {
+        close(hmi_fd);
+        hmi_fd = -1;
+        printf("UART: HMI port closed.\n");
+    }
+    if (bt_fd != -1) {
+        close(bt_fd);
+        bt_fd = -1;
+        printf("UART: Bluetooth port closed.\n");
     }
 }
