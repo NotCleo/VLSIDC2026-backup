@@ -26,7 +26,7 @@ C_SRCS += ../postprocess/postprocess.c ../postprocess/postprocess_scrfd.c ../pos
 C_SRCS += ../../drivers/vectorblox/vbx_cnn_api.c ../../drivers/vectorblox/vbx_cnn_model.c
 
 # 2. Application Files
-C_SRCS += main-test.c uart.c ultrasonic.c camera.c servo.c pwm.c
+C_SRCS += main.c uart.c ultrasonic.c camera.c servo.c pwm.c
 # 3. C++ Classifier
 CXX_SRCS = classifier.cpp
 
